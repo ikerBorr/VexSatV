@@ -1,0 +1,22 @@
+{
+  "name": "VexSatV",
+  "build": {
+    "context": "..",
+    "dockerfile": "../docker/Dockerfile"
+  },
+  "remoteUser": "dev",
+  "updateRemoteUserUID": true,
+  "onCreateCommand": "git submodule update --init --recursive",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "scalameta.metals",
+        "ms-vscode.cpptools",
+        "mshr-h.veriloghdl"
+      ],
+      "settings": {
+        "files.eol": "\n"
+      }
+    }
+  }
+}
