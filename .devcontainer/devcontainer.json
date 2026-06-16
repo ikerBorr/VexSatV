@@ -10,7 +10,6 @@
   "customizations": {
     "vscode": {
       "extensions": [
-        "scalameta.metals",
         "ms-vscode.cpptools",
         "mshr-h.veriloghdl"
       ],
