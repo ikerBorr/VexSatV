@@ -1,7 +1,7 @@
 /gen/*
 !/gen/README.md
 
-/fw/build/
+/firmware/build/
 *.o
 *.d
 *.elf

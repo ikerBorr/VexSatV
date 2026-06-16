@@ -5,11 +5,11 @@ export GID := $(shell id -g)
 
 GEN_MAIN ?= vexsatv.VexSatV
 SIM_MAIN ?= vexsatv.VexSatVSim
-FW_BIN   ?= fw/build/firmware.bin
+FW_BIN   ?= firmware/build/firmware.bin
 
-.PHONY: all gen fw sim shell build clean
+.PHONY: all gen firmware sim shell build clean
 
-all: gen fw sim
+all: gen firmware sim
 
 build:
 	$(COMPOSE) build
@@ -17,15 +17,15 @@ build:
 gen: build
 	$(RUN) sh -c 'cd hw && sbt "runMain $(GEN_MAIN)"'
 
-fw: build
-	$(RUN) make -C fw
+firmware: build
+	$(RUN) make -C firmware
 
-sim: build fw
+sim: build firmware
 	$(RUN) sh -c 'cd hw && sbt "Test/runMain $(SIM_MAIN) ../$(FW_BIN)"'
 
 shell: build
 	$(RUN) bash
 
 clean:
-	$(RUN) make -C fw clean || true
+	$(RUN) make -C firmware clean || true
 	rm -rf gen/* hw/target hw/project/target
