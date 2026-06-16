@@ -1,4 +1,4 @@
-package vexriscv.demo
+package vexsatv
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -140,7 +140,7 @@ object VexSatvConfig {
                   minstretAccess = CsrAccess.READ_WRITE
               )
             ),
-            new YamlPlugin("rtl/VexSatv.yaml")
+            new YamlPlugin("../gen/VexSatv.yaml")
         )
     )
 }
@@ -426,10 +426,10 @@ case class Apb3Plic(sourceCount: Int, targetCount: Int) extends Component {
     )(gateways = gateways, targets = targets)
 }
 
-object VexSatv {
+object VexSatV {
     def main(args: Array[String]): Unit = {
         SpinalConfig(
-            targetDirectory = "rtl",
+            targetDirectory = "../gen",
             defaultConfigForClockDomains = ClockDomainConfig(resetActiveLevel = HIGH)
         )
         .generateVerilog {

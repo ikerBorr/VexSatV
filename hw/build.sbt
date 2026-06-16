@@ -9,8 +9,7 @@ lazy val spinalDeps = Seq(
   compilerPlugin("com.github.spinalhdl" %% "spinalhdl-idsl-plugin" % spinalVersion)
 )
 
-lazy val vexriscv = (project in file("vendor/VexRiscv"))
-  .settings(libraryDependencies ++= spinalDeps)
+lazy val vexriscv = RootProject(file("vendor/VexRiscv"))
 
 lazy val vexsatv = (project in file("."))
   .dependsOn(vexriscv)
