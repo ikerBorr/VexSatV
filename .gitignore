@@ -22,4 +22,7 @@ project/target/
 .vscode/*
 !.vscode/extensions.json
 
+
+/hw/simWorkspace/
+
 .DS_Store
