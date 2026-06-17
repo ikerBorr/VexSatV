@@ -1,4 +1,4 @@
-package vexriscv.demo
+package vexsatv
 
 import java.nio.file.{Files, Paths}
 import scala.collection.mutable
@@ -7,67 +7,50 @@ import spinal.core._
 import spinal.core.sim._
 import spinal.lib.com.uart.sim.UartEncoder
 
-// ---------------------------------------------------------------------------
-//  Run VexSatv firmware in Verilator:
-//    1. hold CPU in reset, load firmware.bin into BRAM over S_AXI_BRAM
-//    2. release the CPU
-//    3. capture + print the SoC's UART output
-//    4. if no UART byte arrives within 30 s (wall-clock), fail the test
-//
-//  Run:
-//    sbt "runMain vexriscv.demo.VexSatvSimAxiLoad build/firmware.bin"
-// ---------------------------------------------------------------------------
-object VexSatvSimAxiLoad {
+object VexSatVSimAxiLoad {
   def main(args: Array[String]): Unit = {
     val firmwareBin = if (args.nonEmpty) args(0) else "test/build/firmware.bin"
 
     SimConfig
-      .allOptimisation                       // add .withWave for a VCD (slower)
-      .compile(new VexSatv(VexSatvConfig.default))
+      .allOptimisation
+      .compile(new VexSatV(VexSatVConfig.default))
       .doSimUntilVoid("axiload", 1246756194) { dut =>
-        // picosecond timebase
         val mainClkPeriod  = (1e12 / dut.config.coreFrequency.toDouble).toLong
         val uartBaudPeriod = (1e12 / dut.config.baudRate.toDouble).toLong
 
         val clockDomain = ClockDomain(dut.io.mainClk)
         clockDomain.forkStimulus(mainClkPeriod)
 
-        // -------------------- UART RX (host -> SoC) --------------------
         UartEncoder(dut.io.uart.rxd, uartBaudPeriod)
-        dut.io.uart.rxd #= true                          // idle line high
+        dut.io.uart.rxd #= true
 
-        // -------------------- UART TX capture (SoC -> host) ------------
-        // UartDecoder has no onByte callback (only (uartPin, baudPeriod)),
-        // so we decode the line ourselves to BOTH print and capture bytes.
-        // Frame = 8 data bits (dataLength=7 in the config), no parity, 1 stop.
         val uartQueue    = mutable.Queue[Byte]()
         val uartDataBits = 8
         fork {
-          waitUntil(dut.io.uart.txd.toBoolean)           // wait for idle line
+          waitUntil(dut.io.uart.txd.toBoolean)
           while (true) {
-            waitUntil(!dut.io.uart.txd.toBoolean)        // start bit (falling edge)
-            sleep(uartBaudPeriod / 2)                    // align to centre of start bit
+            waitUntil(!dut.io.uart.txd.toBoolean)
+            sleep(uartBaudPeriod / 2)
             var value = 0
             var i = 0
             while (i < uartDataBits) {
-              sleep(uartBaudPeriod)                      // centre of data bit i (LSB first)
+              sleep(uartBaudPeriod)
               if (dut.io.uart.txd.toBoolean) value |= (1 << i)
               i += 1
             }
-            sleep(uartBaudPeriod)                        // consume stop bit
+            sleep(uartBaudPeriod)
             uartQueue.enqueue(value.toByte)
-            print(value.toChar); Console.out.flush()     // live, readable output
+            print(value.toChar); Console.out.flush()
           }
         }
 
-        // -------------------- reset + load + release -------------------
         println("[sim] asserting resets")
         dut.io.asyncReset    #= true
         dut.io.asyncCpuReset #= true
         clockDomain.waitSampling(20)
 
-        dut.io.asyncReset    #= false                    // bus fabric up, CPU still held
-        clockDomain.waitSampling(300)                    // wait out the BOOT reset counter
+        dut.io.asyncReset    #= false
+        clockDomain.waitSampling(300)
         println("[sim] bus fabric released, reading firmware")
 
         val raw = Files.readAllBytes(Paths.get(firmwareBin))
@@ -117,11 +100,10 @@ object VexSatvSimAxiLoad {
         println(f"[sim] first word @0x0 = 0x$w0%08x (expect 0x0240006f, a 'j' to _boot)\n")
         dut.io.asyncCpuReset #= false
 
-        // -------------------- 30 s watchdog on first UART byte ---------
         val timeoutMs = 30000L
         val startMs   = System.currentTimeMillis()
         while (uartQueue.isEmpty && (System.currentTimeMillis() - startMs) < timeoutMs) {
-          clockDomain.waitSampling(1000)                 // run a bit, then re-check
+          clockDomain.waitSampling(1000)
         }
 
         if (uartQueue.isEmpty) {
@@ -130,7 +112,7 @@ object VexSatvSimAxiLoad {
         }
 
         println("\n[sim] UART output detected - continuing to capture...\n")
-        clockDomain.waitSampling(2000000)                // let the rest stream out
+        clockDomain.waitSampling(2000000)
         simSuccess()
       }
   }

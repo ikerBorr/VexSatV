@@ -28,7 +28,7 @@ int main(void) {
 
     while (1)
     {
-        println("hello world arty a7 v1");
+        println("hello world zcu104 v1");
         delay(1000);
     }
 

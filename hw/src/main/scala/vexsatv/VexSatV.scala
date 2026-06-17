@@ -41,7 +41,7 @@ import vexriscv.{VexRiscv, VexRiscvConfig, plugin}
 //   0x0000_0000  reset vector
 //   0x0000_0020  mtvec
 
-case class VexSatvConfig(
+case class VexSatVConfig(
     coreFrequency: HertzNumber,
     onChipRamSize: BigInt,
     ddrSize: BigInt,
@@ -52,10 +52,10 @@ case class VexSatvConfig(
     cpuPlugins: ArrayBuffer[Plugin[VexRiscv]],
 )
 
-object VexSatvConfig {
-    def default: VexSatvConfig = default(0x40000000)
+object VexSatVConfig {
+    def default: VexSatVConfig = default(0x40000000)
 
-    def default(ddrBaseAddress: BigInt): VexSatvConfig = VexSatvConfig(
+    def default(ddrBaseAddress: BigInt): VexSatVConfig = VexSatVConfig(
         coreFrequency = 100 MHz,
         onChipRamSize = 256 KiB,
         ddrSize = 1 GiB,
@@ -145,7 +145,7 @@ object VexSatvConfig {
     )
 }
 
-case class VexSatv(config: VexSatvConfig) extends Component {
+case class VexSatV(config: VexSatVConfig) extends Component {
     import config._
 
     def buildAxiConfig(addressWidth: Int) = Axi4Config(
@@ -433,7 +433,7 @@ object VexSatV {
             defaultConfigForClockDomains = ClockDomainConfig(resetActiveLevel = HIGH)
         )
         .generateVerilog {
-            new VexSatv(VexSatvConfig.default)
+            new VexSatV(VexSatVConfig.default)
         }
     }
 }
